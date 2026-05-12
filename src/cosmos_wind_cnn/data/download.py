@@ -8,26 +8,10 @@ Email: kaparker@usgs.gov
 Updated: 2026-05-11
 """
 
-
-import cdsapi
 import os
-import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-
-
-import os
-
-os.environ["USE_PYGEOS"] = "0"
-
-import fsspec
 import xarray as xr
-
-import intake
-import metpy
-import cartopy.crs as ccrs
 import numpy as np
-
 import pandas as pd
 import time
 import uuid
@@ -35,26 +19,15 @@ import warnings
 from contextlib import contextmanager
 import random
 from typing import Optional, Dict, Callable
-from dask.distributed import Client, LocalCluster
 from pyproj import CRS, Transformer
 from scipy.interpolate import griddata
-
 from typing import Union
 
 
-# Figure out the fsspec situation on this environment
-try:
-    import fsspec
-
-    HAS_FSSPEC = True
-
-except ImportError:
-    HAS_FSSPEC = False
-
-
 #######################################################################
-# General Helper Functions 
+# General Helper Functions
 #######################################################################
+
 
 def wrapTo180(lon):
     lon = np.mod(lon - 180.0, 360.0) - 180.0
@@ -64,6 +37,7 @@ def wrapTo180(lon):
 def wrapTo360(lon):
     lon = lon % 360
     return lon
+
 
 def parseDate(date, type):
     # parses numpy datetime64
@@ -78,6 +52,7 @@ def parseDate(date, type):
         out = []
 
     return out
+
 
 def water_year_slice(da: xr.DataArray | xr.Dataset, yr: int):
     start = pd.Timestamp(yr, 10, 1, 0, 0).to_datetime64()
@@ -113,8 +88,12 @@ def build_hour_list(hours_option):
 # Functions for ERA5 download
 #######################################################################
 
+
 def retrieve_single_month(dataset, client_args, request, date, dir_out):
     """Download a single month of ERA5 data."""
+
+    import cdsapi
+
     yy, mm = date
 
     print(f"Requesting year {yy}, month {mm}")
@@ -242,7 +221,6 @@ def download_era5(
 #         dataset="reanalysis-era5-land",
 #         max_threads=10,
 #     )
-
 
 
 #######################################################################
@@ -393,6 +371,18 @@ def write_netcdf_with_retries(
         Called when a Zstd error occurs to re-materialize the object to write.
         If None, falls back to `obj.load()`.
     """
+
+    # Figure out the fsspec situation on this environment
+    try:
+        import fsspec
+
+        HAS_FSSPEC = True
+
+    except ImportError:
+        HAS_FSSPEC = False
+
+    os.environ["USE_PYGEOS"] = "0"
+
     storage_options = storage_options or {}
 
     # Pre-load if requested
@@ -660,6 +650,7 @@ def reproject_dataset_with_time(
 
     return out_ds
 
+
 def add_lat_lon_from_crs(
     ds: xr.Dataset,
     source_crs: Union[CRS, str, int],
@@ -790,7 +781,6 @@ def add_lat_lon_from_crs(
     return ds_out
 
 
-
 def download_conus404_subset(
     dir_out,
     lim_lon,
@@ -830,8 +820,8 @@ def download_conus404_subset(
         Defaults to "conus404-hourly-ba-osn".
 
     var : list of str, optional
-        List of variable names to retrieve from the dataset.  
-        If None, defaults to a standard meteorological set.  
+        List of variable names to retrieve from the dataset.
+        If None, defaults to a standard meteorological set.
         If dataset == "conus404-hourly-ba-osn", this list is overridden to:
         ["RAINRATE", "T2D"].
 
@@ -873,6 +863,8 @@ def download_conus404_subset(
     import intake
     from distributed import Client, LocalCluster
     from pyproj import CRS
+    import metpy
+    import cartopy.crs as ccrs
 
     # ------------------------------------------------------------------------------
     # Input defaults: variable list and time limits
@@ -880,8 +872,18 @@ def download_conus404_subset(
 
     if var is None:
         var = [
-            "T2", "TD2", "U10", "V10", "PSFC", "LANDMASK",
-            "HGT", "PREC_ACC_NC", "Q2", "SMOIS", "ACSWDNB", "ACLWDNB",
+            "T2",
+            "TD2",
+            "U10",
+            "V10",
+            "PSFC",
+            "LANDMASK",
+            "HGT",
+            "PREC_ACC_NC",
+            "Q2",
+            "SMOIS",
+            "ACSWDNB",
+            "ACLWDNB",
         ]
 
     if dataset == "conus404-hourly-ba-osn":
@@ -958,10 +960,14 @@ def download_conus404_subset(
 
     var_subset = var + ["lat", "lon"]
 
-    da = ds[var_subset].isel(
-        x=slice(np.min(idx[1]), np.max(idx[1])),
-        y=slice(np.min(idx[0]), np.max(idx[0])),
-    ).sel(time=slice(t_lims[0], t_lims[1]))
+    da = (
+        ds[var_subset]
+        .isel(
+            x=slice(np.min(idx[1]), np.max(idx[1])),
+            y=slice(np.min(idx[0]), np.max(idx[0])),
+        )
+        .sel(time=slice(t_lims[0], t_lims[1]))
+    )
 
     # ------------------------------------------------------------------------------
     # Optional reprojection

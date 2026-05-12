@@ -10,10 +10,9 @@ Output:
 """
 
 
-
 ### Import functions ###
 
-from cosmos_wind_cnn.data.download import download_era5,download_conus404_subset
+from cosmos_wind_cnn.data.download import download_era5, download_conus404_subset
 
 
 def main():
@@ -26,15 +25,14 @@ def main():
     dir_out = r"D:\Kai\DataDownloads\Conus404\download_BA_SFbay"
 
     # Spatial boundaries
-    lim_lon = [-123.6, -120.7]   # West, East
-    lim_lat = [36.7, 39.4]       # South, North
+    lim_lon = [-123.6, -120.7]  # West, East
+    lim_lat = [36.7, 39.4]  # South, North
 
+    asdf
+    # ------------------------------------------------------------------------------
+    # Download the ERA5 Data
+    # ------------------------------------------------------------------------------
 
-    
-    # ------------------------------------------------------------------------------
-    # Download the ERA5 Data 
-    # ------------------------------------------------------------------------------
-    
     download_era5(
         dir_out=r"D:\Kai\ERA5\PNW_Meteo",
         area_lims=[49, -126.5, 41.5, -122],
@@ -52,11 +50,9 @@ def main():
         max_threads=10,
     )
 
-
     # ------------------------------------------------------------------------------
-    # Download the Conus404 Data 
+    # Download the Conus404 Data
     # ------------------------------------------------------------------------------
-
 
     # Dataset selection
     dataset = "conus404-hourly-ba-osn"
@@ -87,11 +83,9 @@ def main():
         n_workers=n_workers,
     )
 
-
     # ------------------------------------------------------------------------------
     # Write out the yaml file with the metadata for this download
     # ------------------------------------------------------------------------------
-
 
 
 if __name__ == "__main__":
