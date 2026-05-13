@@ -1,0 +1,30 @@
+name: cosmos-wind-cnn
+channels:
+  - conda-forge
+dependencies:
+  - pytorch
+  - torchvision
+  - numpy
+  - scipy
+  - pandas
+  - xarray
+  - netcdf4
+  - scikit-learn
+  - metpy
+  - dask
+  - fsspec
+  - intake
+  - matplotlib
+  - seaborn
+  - tqdm
+  - pyyaml
+  - pyproj
+  - cartopy
+  - tensorboard
+  - jupyter
+  - ipython
+  - pytest
+
+  - pip
+  - pip:
+      - -e .

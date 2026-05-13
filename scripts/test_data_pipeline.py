@@ -16,14 +16,16 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
-#from pyproj import CRS
+from pyproj import CRS
 
 from cosmos_wind_cnn.data.utils_general import wrap_to_180, water_year_slice
 from cosmos_wind_cnn.data.reprojection import reproject_dataset
 from cosmos_wind_cnn.data.logging_config import get_logger
 
 
-logger = get_logger(__name__, log_file=r"C:\Users\kai\Documents\Github\cosmos-wind-cnn\process.log")
+logger = get_logger(
+    __name__, log_file=r"C:\Users\kai\Documents\Github\cosmos-wind-cnn\process.log"
+)
 
 
 def test_imports():

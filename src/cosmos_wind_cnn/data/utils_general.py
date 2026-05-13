@@ -107,7 +107,9 @@ def water_year_slice(da: xr.DataArray | xr.Dataset, year: int):
     return da.sel(time=slice(start, end))
 
 
-def expand_year_months(years: tuple[int, int], months: tuple[int, int]) -> list[list[str]]:
+def expand_year_months(
+    years: tuple[int, int], months: tuple[int, int]
+) -> list[list[str]]:
     """
     Expand year and month ranges into a list of [YYYY, MM] strings.
 
@@ -129,7 +131,8 @@ def expand_year_months(years: tuple[int, int], months: tuple[int, int]) -> list[
     ]
 
 
-def build_day_list(days: str | list[int]) -> list"""
+def build_day_list(days: str | list[int]) -> list:
+    """
     Build a list of day strings (DD).
 
     Parameters
@@ -147,7 +150,8 @@ def build_day_list(days: str | list[int]) -> list"""
     return [f"{int(d):02d}" for d in days]
 
 
-def build_hour_list(hours: str | list[int]) -> list"""
+def build_hour_list(hours: str | list[int]) -> list:
+    """
     Build a list of hour strings (HH:00).
 
     Parameters
