@@ -1,5 +1,5 @@
 """
-Dwnload data
+Download data
 
 Usage:
 
@@ -9,79 +9,96 @@ Output:
 
 """
 
+# ------------------------------------------------------------------------------
+# Import packages
+# ------------------------------------------------------------------------------
+import os
+from cosmos_wind_cnn.data.logging_config import get_logger
 
-### Import functions ###
 
-from cosmos_wind_cnn.data.download import download_era5, download_conus404_subset
+# ------------------------------------------------------------------------------
+# Startup and general housecleaning
+# ------------------------------------------------------------------------------
+
+logger = get_logger("DownloadLogger", log_file="DataDownload2.log")
+
+# ------------------------------------------------------------------------------
+# Get it done
+# ------------------------------------------------------------------------------
 
 
 def main():
-    """
-    Script to download data
-
-    """
+    # ------------------------------------------------------------------------------
+    # User Inputs
+    # ------------------------------------------------------------------------------
 
     # Output directory
-    dir_out = r"D:\Kai\DataDownloads\Conus404\download_BA_SFbay"
+    dir_out = r"case_studies\puget_sound\data\raw"
 
     # Spatial boundaries
-    lim_lon = [-123.6, -120.7]  # West, East
-    lim_lat = [36.7, 39.4]  # South, North
+    lim_lon = [-126, -121.5]  # West, East
+    lim_lat = [46.5, 49.5]  # South, North
 
-    asdf
+    # Variables
+
+    # Threads
+    Threads = os.cpu_count() - 1
+
+    # Which dataset to download:
+    dataset_to_download = "conus404"  # or "conus404"
+
     # ------------------------------------------------------------------------------
     # Download the ERA5 Data
     # ------------------------------------------------------------------------------
+    if dataset_to_download == "era5":
+        from cosmos_wind_cnn.data.era5_download import download_era5
 
-    download_era5(
-        dir_out=r"D:\Kai\ERA5\PNW_Meteo",
-        area_lims=[49, -126.5, 41.5, -122],
-        years=[2024, 2026],
-        months=[1, 12],
-        variables=[
-            "10m_u_component_of_wind",
-            "10m_v_component_of_wind",
-            "2m_temperature",
-            "2m_dewpoint_temperature",
-            "mean_sea_level_pressure",
-            "total_precipitation",
-        ],
-        dataset="reanalysis-era5-land",
-        max_threads=10,
-    )
+        logger.info("Starting ERA5 download...")
+
+        download_era5(
+            output_dir=os.path.join(dir_out, "ERA5"),
+            area=[
+                lim_lat[1],
+                lim_lon[0],
+                lim_lat[0],
+                lim_lon[1],
+            ],  # North, West, South, East
+            variables=[
+                "10m_u_component_of_wind",
+                "10m_v_component_of_wind",
+                "2m_temperature",
+                "2m_dewpoint_temperature",
+                "mean_sea_level_pressure",
+                "total_precipitation",
+            ],
+            dataset="reanalysis-era5-land",
+            max_threads=Threads,
+        )
 
     # ------------------------------------------------------------------------------
     # Download the Conus404 Data
     # ------------------------------------------------------------------------------
+    elif dataset_to_download == "conus404":
+        from cosmos_wind_cnn.data.conus404 import conus404_download_subset
 
-    # Dataset selection
-    dataset = "conus404-hourly-ba-osn"
+        logger.info("Starting conus404 download...")
 
-    # Optional subset of variables (None = defaults)
-    var = None
+        # Dataset selection
+        dataset = "conus404-hourly-osn"
 
-    # Temporal subset (None = full 1979–2022)
-    t_lims = None
+        # Variables to download (ignored for BA dataset since it has a fixed variable list)
+        var = ["T2", "TD2", "U10", "V10", "PSFC"]
 
-    # Whether to reproject and EPSG code for target CRS
-    reproject = False
-    reproject_crs = 26910  # UTM Zone 10N
-
-    # Number of Dask workers
-    n_workers = 2
-
-    # Call the function
-    download_conus404_subset(
-        dir_out=dir_out,
-        lim_lon=lim_lon,
-        lim_lat=lim_lat,
-        dataset=dataset,
-        var=var,
-        t_lims=t_lims,
-        reproject=reproject,
-        reproject_crs=reproject_crs,
-        n_workers=n_workers,
-    )
+        # Call the function
+        conus404_download_subset(
+            output_dir=os.path.join(dir_out, "conus404"),
+            lim_lon=lim_lon,
+            lim_lat=lim_lat,
+            dataset=dataset,
+            variables=var,
+            reproject=False,
+            n_workers=Threads,
+        )
 
     # ------------------------------------------------------------------------------
     # Write out the yaml file with the metadata for this download

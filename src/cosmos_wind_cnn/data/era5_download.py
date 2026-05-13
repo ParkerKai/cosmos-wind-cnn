@@ -9,16 +9,16 @@ from __future__ import annotations
 
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional, Dict, List
+from typing import Optional, List
+from datetime import datetime
 
 from .utils_general import (
     expand_year_months,
     build_day_list,
     build_hour_list,
 )
-from .logging_config import get_logger
+from download_data import logger
 
-logger = get_logger(__name__)
 
 
 def retrieve_month(
@@ -76,11 +76,11 @@ def retrieve_month(
 def download_era5(
     output_dir: str,
     area: list[float],
-    years: tuple[int, int],
-    months: tuple[int, int],
-    variables: List[str],
+    years: tuple[int, int] = [1950, datetime.now().year],
+    months: tuple[int, int] = [1, 12],
+    variables: List[str] = ["10m_u_component_of_wind", "10m_v_component_of_wind"],
     dataset: str = "reanalysis-era5-land",
-    max_threads: int = 10,
+    max_threads: int = (os.cpu_count() - 1),
     days: str | list[int] = "all",
     hours: str | list[int] = "all",
     cds_url: Optional[str] = None,
@@ -125,6 +125,9 @@ def download_era5(
     """
     os.makedirs(output_dir, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
+    logger.info(f"Output area: {area}")
+    logger.info(f"Output years: {years}")
+    logger.info(f"Output months: {months}")
 
     base_request = {
         "data_format": "netcdf",

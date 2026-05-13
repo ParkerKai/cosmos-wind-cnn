@@ -24,6 +24,11 @@ dependencies:
   - jupyter
   - ipython
   - pytest
+  - requests
+  - aiohttp
+  - intake-xarray
+  - zarr
+  - s3fs
 
   - pip
   - pip:

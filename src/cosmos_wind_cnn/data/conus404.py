@@ -17,18 +17,19 @@ import pandas as pd
 from .utils_general import wrap_to_180, parse_date, water_year_slice
 from .reprojection import add_lat_lon_from_crs, reproject_dataset
 from .file_io import write_netcdf_with_retries
-from .logging_config import get_logger
 
-logger = get_logger(__name__)
-
+import logging
+logger = logging.getLogger('DownloadLogger')
 
 def conus404_download_subset(
     output_dir: str,
     lim_lon: list[float],
     lim_lat: list[float],
     dataset: str = "conus404-hourly-ba-osn",
-    variables: list[str] | None = None,
-    time_lims: list | None = None,
+    variables: list[str] = ["T2", "TD2", "U10", "V10", "PSFC"],
+    time_lims: list = [
+        pd.Timestamp(1979, 10, 1),
+        pd.Timestamp(2022, 10, 1)],
     reproject: bool = False,
     reproject_crs: int = 26910,
     n_workers: int = 2,
@@ -80,20 +81,9 @@ def conus404_download_subset(
     import cartopy.crs as ccrs  # Needed behind the scenes by metpy.parse_cf
     from pyproj import CRS
 
-    # Default variables
-    if variables is None:
-        variables = ["T2", "TD2", "U10", "V10", "PSFC"]
-
     # Special-case variable list for BA dataset
     if dataset == "conus404-hourly-ba-osn":
         variables = ["RAINRATE", "T2D"]
-
-    # Default temporal range
-    if time_lims is None:
-        time_lims = [
-            pd.Timestamp(1979, 10, 1),
-            pd.Timestamp(2022, 10, 1),
-        ]
 
     # -----------------------------
     # 1. Start Dask LocalCluster
@@ -121,13 +111,19 @@ def conus404_download_subset(
     ds = conus_cat[dataset].to_dask().metpy.parse_cf()
 
     # -----------------------------
-    # 3. Ensure lat/lon present
+    # 3. Ensure lat/lon present and remove duplicate timestamps
     # -----------------------------
     if "lon" not in ds:
         logger.info("Computing lat/lon coordinates from CRS...")
         src = CRS.from_wkt(ds["crs"].attrs["crs_wkt"])
         tgt = CRS.from_epsg(4326)
         ds = add_lat_lon_from_crs(ds, src, tgt)
+
+
+    # Get rid of duplicate timestamps
+    ds = ds.sortby("time")
+    _, unique_index = np.unique(ds["time"], return_index=True)
+    ds = ds.isel(time=unique_index)
 
     # -----------------------------
     # 4. Spatial/temporal subset
@@ -136,7 +132,7 @@ def conus404_download_subset(
     lon_vals = ds["lon"].values
     lat_vals = ds["lat"].values
 
-    wrapped_lons = wrap_to_180(lim_lon)
+    wrapped_lons = wrap_to_180(np.array(lim_lon))
 
     mask = (
         (lon_vals >= wrapped_lons[0])
