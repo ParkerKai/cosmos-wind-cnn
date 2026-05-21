@@ -20,7 +20,7 @@ from cosmos_wind_cnn.data.logging_config import get_logger
 # Startup and general housecleaning
 # ------------------------------------------------------------------------------
 
-logger = get_logger("DownloadLogger", log_file="DataDownload2.log")
+logger = get_logger("DownloadLogger", log_file="..\case_studies\puget_soud\logs\DataDownload.log")
 
 # ------------------------------------------------------------------------------
 # Get it done
@@ -33,7 +33,7 @@ def main():
     # ------------------------------------------------------------------------------
 
     # Output directory
-    dir_out = r"case_studies\puget_sound\data\raw"
+    dir_out = r"..\case_studies\puget_sound\data\raw"
 
     # Spatial boundaries
     lim_lon = [-126, -121.5]  # West, East
@@ -86,7 +86,7 @@ def main():
         # Dataset selection
         dataset = "conus404-hourly-osn"
 
-        # Variables to download (ignored for BA dataset since it has a fixed variable list)
+        # Variables to download (BA dataset will drop variables since it has a fixed variable list)
         var = ["T2", "TD2", "U10", "V10", "PSFC"]
 
         # Call the function

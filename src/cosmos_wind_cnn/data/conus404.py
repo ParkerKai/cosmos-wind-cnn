@@ -19,17 +19,17 @@ from .reprojection import add_lat_lon_from_crs, reproject_dataset
 from .file_io import write_netcdf_with_retries
 
 import logging
-logger = logging.getLogger('DownloadLogger')
+
+logger = logging.getLogger("DownloadLogger")
+
 
 def conus404_download_subset(
-    output_dir: str,
+    output_dir: str, 
     lim_lon: list[float],
     lim_lat: list[float],
     dataset: str = "conus404-hourly-ba-osn",
     variables: list[str] = ["T2", "TD2", "U10", "V10", "PSFC"],
-    time_lims: list = [
-        pd.Timestamp(1979, 10, 1),
-        pd.Timestamp(2022, 10, 1)],
+    time_lims: list = [pd.Timestamp(1979, 10, 1), pd.Timestamp(2022, 10, 1)],
     reproject: bool = False,
     reproject_crs: int = 26910,
     n_workers: int = 2,
@@ -70,6 +70,7 @@ def conus404_download_subset(
     -------
     None
     """
+
     os.makedirs(output_dir, exist_ok=True)
     logger.info(f"Starting CONUS404 subset extraction.")
     logger.info(f"Output directory: {output_dir}")
@@ -118,7 +119,6 @@ def conus404_download_subset(
         src = CRS.from_wkt(ds["crs"].attrs["crs_wkt"])
         tgt = CRS.from_epsg(4326)
         ds = add_lat_lon_from_crs(ds, src, tgt)
-
 
     # Get rid of duplicate timestamps
     ds = ds.sortby("time")
@@ -178,6 +178,13 @@ def conus404_download_subset(
     # 6. Export water years
     # -----------------------------
     logger.info("Exporting water-year files...")
+
+    # Drop the CRS as we can't directly serialize it into a netcdf
+    crs = ds_sub[variables[0]].metpy.cartopy_crs
+
+    # Add projection as json since the metpy_crs object can't be turned into a netcdf.
+    ds_sub = ds_sub.drop_vars("metpy_crs")
+    ds_sub.attrs["projection"] = crs.to_json()
 
     years = np.unique(parse_date(ds_sub["time"].values, "year"))
 
