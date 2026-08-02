@@ -19,8 +19,9 @@ from cosmos_wind_cnn.data.logging_config import get_logger
 # ------------------------------------------------------------------------------
 # Startup and general housecleaning
 # ------------------------------------------------------------------------------
+case_study = "puget_sound"
 
-logger = get_logger("DownloadLogger", log_file="..\case_studies\puget_soud\logs\DataDownload.log")
+logger = get_logger("DownloadLogger", log_file=r"..\case_studies\{case_study}\logs\DataDownload.log")
 
 # ------------------------------------------------------------------------------
 # Get it done
@@ -33,19 +34,20 @@ def main():
     # ------------------------------------------------------------------------------
 
     # Output directory
-    dir_out = r"..\case_studies\puget_sound\data\raw"
+    dir_out = r"..\case_studies\{case_study}\data\raw"
 
     # Spatial boundaries
+    # lim_lon = [-126, -123.5]  # West, East
+    # lim_lat = [41.5, 48.5]  # South, North
     lim_lon = [-126, -121.5]  # West, East
-    lim_lat = [46.5, 49.5]  # South, North
-
+    lim_lat = [46.5, 49.5]  # South, North 
     # Variables
 
     # Threads
     Threads = os.cpu_count() - 1
 
     # Which dataset to download:
-    dataset_to_download = "conus404"  # or "conus404"
+    dataset_to_download = "HRRR"  # "era5" or "conus404" "HRRR"
 
     # ------------------------------------------------------------------------------
     # Download the ERA5 Data
@@ -68,11 +70,13 @@ def main():
                 "10m_v_component_of_wind",
                 "2m_temperature",
                 "2m_dewpoint_temperature",
-                "mean_sea_level_pressure",
+                "surface_pressure",
                 "total_precipitation",
             ],
             dataset="reanalysis-era5-land",
             max_threads=Threads,
+            years = [1950, 2026],
+
         )
 
     # ------------------------------------------------------------------------------
@@ -99,6 +103,18 @@ def main():
             reproject=False,
             n_workers=Threads,
         )
+
+    elif dataset_to_download == 'HRRR':
+        from cosmos_wind_cnn.data.HRRR_download import hrrr_download_subset
+        hrrr_download_subset(
+            output_dir=os.path.join(dir_out, "HRRR"),
+            lim_lon=lim_lon,
+            lim_lat=lim_lat,
+            variables=[
+                r":TMP:2 m"  # 2-m temperature
+            ])
+
+
 
     # ------------------------------------------------------------------------------
     # Write out the yaml file with the metadata for this download
