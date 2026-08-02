@@ -32,6 +32,8 @@ Thumbs.db
 # Data files (across all case studies)
 *.nc
 *.pkl
+*.nc.part*
+
 
 # Model checkpoints
 *.pth
